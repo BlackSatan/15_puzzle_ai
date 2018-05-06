@@ -1,0 +1,127 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../puzzle-item/puzzle-item.html">
+
+<dom-module id="puzzle-app">
+  <template>
+    <style>
+      :host {
+        display: grid;
+        height: 100vh;
+        width: 100vw;
+        grid-template-columns: auto 100vh auto;
+        grid-template-areas: "log main .";
+      }
+      .puzzle-app {
+        margin: 10px;
+        border: 3px dashed rgba(0, 0, 0, .1);
+        padding: 10px;
+        grid-area: main;
+        display: grid;
+        grid-gap: 15px;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+      }
+      .puzzle-app-log {
+        margin: 10px 0 10px 10px;
+        padding: 10px;
+        grid-area: log;
+        background: rgba(0, 0, 0, .8);
+        font-family: MONOSPACE;
+        color: white;
+      }
+      .puzzle-app-log__log {
+        /*margin: 5px 0;*/
+      }
+      .puzzle-app-log__log--error {
+        color: red;
+      }
+    </style>
+    <div class="puzzle-app-log">
+      <!--<template is="dom-repeat" items="{{logs}}">-->
+        <!--<div class="puzzle-app-log__log">-->
+          <!--{{item.message}}-->
+        <!--</div>-->
+      <!--</template>-->
+    </div>
+    <div class="puzzle-app">
+      <template is="dom-repeat" items="{{items}}">
+        <template is="dom-repeat" items="{{item}}">
+          <puzzle-item number="{{item}}"></puzzle-item>
+        </template>
+      </template>
+    </div>
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class PuzzleApp extends Polymer.Element {
+      log(message, code = 'log') {
+        this.logs.push({
+          message,
+          code,
+        });
+        this.logTyper.line(
+          `<span class="puzzle-app-log__log puzzle-app-log__log--${code}">${message}</span>`
+        );
+      }
+
+      static generateMap() {
+        const arr = [
+          ...Array(15).keys(),
+          null,
+        ].map(i => i !== null ? i + 1 : i);
+        const shuffleArray = arr => (
+          arr
+            .map(a => [Math.random(), a])
+            .sort((a, b) => a[0] - b[0])
+            .map(a => a[1])
+        );
+        const perChunk = 4;
+        return shuffleArray(arr).reduce((resultArray, item, index) => {
+          const chunkIndex = Math.floor(index/perChunk);
+
+          if(!resultArray[chunkIndex]) {
+            resultArray[chunkIndex] = []; // start a new chunk
+          }
+
+          resultArray[chunkIndex].push(item);
+
+          return resultArray;
+        }, []);
+      }
+
+      constructor() {
+        super();
+
+        this.logs = [];
+        this.items = [];
+      }
+
+      ready() {
+        super.ready();
+        const logContainer = this.shadowRoot.querySelector('.puzzle-app-log');
+        this.logTyper = typer(logContainer);
+        this.log('Application initialized');
+        this.items = PuzzleApp.generateMap();
+        this.log('Map is randomly generated');
+        setTimeout(() => this.log('WTF??', 'error'), 2000);
+      }
+
+      static get is() { return 'puzzle-app'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'puzzle-app'
+          }
+        };
+      }
+    }
+
+    window.customElements.define(PuzzleApp.is, PuzzleApp);
+  </script>
+</dom-module>

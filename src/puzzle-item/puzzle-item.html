@@ -1,0 +1,38 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
+
+<dom-module id="puzzle-item">
+    <template>
+        <style>
+            .puzzle-item {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                text-align: center;
+                width: 100%;
+                height: 100%;
+                background: #fffbb1;
+                font-weight: 600;
+                border-radius: 3px;
+                font-size: 4rem;
+                color: #b83eff;
+            }
+        </style>
+        <template is="dom-if" if="{{number}}">
+            <div class="puzzle-item">
+                [[number]]
+            </div>
+        </template>
+    </template>
+    <script>
+        class PuzzleItem extends Polymer.Element {
+          static get is() { return 'puzzle-item'; }
+          static get properties() {
+            return {
+              number: Number,
+            };
+          }
+        }
+        window.customElements.define(PuzzleItem.is, PuzzleItem);
+    </script>
+</dom-module>

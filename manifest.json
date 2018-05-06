@@ -1,0 +1,7 @@
+{
+  "name": "15_puzzle_ai",
+  "short_name": "15_puzzle_ai",
+  "description": "JavaScript 15 puzzle best first search solution",
+  "start_url": "/",
+  "display": "standalone"
+}
