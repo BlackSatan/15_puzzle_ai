@@ -1,5 +1,3 @@
-const util = require('util')
-
 function generateMap() {
   const arr = [
     ...Array(15).keys(),
@@ -28,14 +26,25 @@ function generateMap() {
 function generateValidMap() {
   let map;
   do {
-    console.log('map gen');
+
     map = generateMap();
   } while (!get15PuzzleIsStateHasSolution(map));
   return map;
 }
 
-const initialState = generateValidMap();
-console.log('initialState', util.inspect(initialState, {showHidden: false, depth: null}));
+function chunkArray(myArray, chunk_size){
+    let arrayLength = myArray.length;
+    let tempArray = [];
+    let myChunk;
+
+    for (let index = 0; index < arrayLength; index += chunk_size) {
+        myChunk = myArray.slice(index, index+chunk_size);
+        // Do something if you want with the group
+        tempArray.push(myChunk);
+    }
+
+    return tempArray;
+}
 
 function get15PuzzleFlatState(state) {
   return state.reduce((list, el) => [ ...list, ...el ], []);
@@ -107,7 +116,6 @@ function make15PuzzleSteps(state) {
 }
 
 function is15PuzzleFinalState(state) {
-  console.log('state', state);
   const flatState = get15PuzzleFlatState(state);
   if (flatState.pop() !== null) {
     return false;
@@ -133,18 +141,22 @@ function get15PuzzleStatePlacesScore(state) {
   return -get15PuzzleFlatState(scores).reduce((a, b) => a + b, 0);
 }
 
-function rbfs(open, close, hash, nextStatesMaker, finalChecker, scoreMaker) {
+function rbfs(open, close, hash, nextStatesMaker, finalChecker, scoreMaker, onProgress) {
+  let last = null;
   while (open.length > 0) {
     const {state: openState, score: openScore, depth: openDepth } = open.shift();
-
+    console.log(openScore);
 
     const isFinal = finalChecker(openState);
     if (isFinal) {
       return {
+        last: hash(last),
         state: hash(openState),
         steps: close,
       };
     }
+
+    last = openState;
 
     const nextStates = nextStatesMaker(openState);
     const nextStatesScores = nextStates
@@ -155,7 +167,6 @@ function rbfs(open, close, hash, nextStatesMaker, finalChecker, scoreMaker) {
       }))
       .sort((a, b) => b.score - a.score);
 
-    console.log('===level score===', openScore);
     for (const nextStateScore of nextStatesScores) {
       const {state: nextState, step: nextStep} = nextStates[nextStateScore.index];
 
@@ -177,5 +188,25 @@ function rbfs(open, close, hash, nextStatesMaker, finalChecker, scoreMaker) {
   return null;
 }
 
-const result = rbfs([{ state: initialState, score: 0, depth: 0 }], { [get15PuzzleHash(initialState)]: null, }, get15PuzzleHash, make15PuzzleSteps, is15PuzzleFinalState, get15PuzzleStatePlacesScore);
-console.log(result);
+function formatRbfsResult(steps, last, initial) {
+  let current = { value: last }, i = 0;
+  const history = [];
+  while (steps[current.value]) {
+    if (!steps[current.value].value) {
+      break;
+    }
+
+    if (initial === current.value) {
+      break;
+    }
+
+    if (current.value === steps[current.value].value) {
+      break;
+    }
+
+    current = steps[current.value];
+    const converted = chunkArray(current.value.split('|').map(item => item || null), 4);
+    history.push(converted);
+  }
+  return history.reverse();
+}

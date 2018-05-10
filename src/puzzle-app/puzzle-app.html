@@ -69,31 +69,6 @@
         );
       }
 
-      static generateMap() {
-        const arr = [
-          ...Array(15).keys(),
-          null,
-        ].map(i => i !== null ? i + 1 : i);
-        const shuffleArray = arr => (
-          arr
-            .map(a => [Math.random(), a])
-            .sort((a, b) => a[0] - b[0])
-            .map(a => a[1])
-        );
-        const perChunk = 4;
-        return shuffleArray(arr).reduce((resultArray, item, index) => {
-          const chunkIndex = Math.floor(index/perChunk);
-
-          if(!resultArray[chunkIndex]) {
-            resultArray[chunkIndex] = []; // start a new chunk
-          }
-
-          resultArray[chunkIndex].push(item);
-
-          return resultArray;
-        }, []);
-      }
-
       constructor() {
         super();
 
@@ -106,9 +81,26 @@
         const logContainer = this.shadowRoot.querySelector('.puzzle-app-log');
         this.logTyper = typer(logContainer);
         this.log('Application initialized');
-        this.items = PuzzleApp.generateMap();
-        this.log('Map is randomly generated');
-        setTimeout(() => this.log('WTF??', 'error'), 2000);
+        this.items = generateValidMap();
+        this.log('Map is randomly generated, Running BFS');
+        const onProgress = (d) => {
+            this.log(`Goal distance: ${d}`);
+        };
+        setTimeout(() =>  { // TODO: move to service workers
+            const result = rbfs([{ state: this.items, score: 0, depth: 0 }], { [get15PuzzleHash(this.items)]: null, }, get15PuzzleHash, make15PuzzleSteps, is15PuzzleFinalState, get15PuzzleStatePlacesScore, onProgress);
+            console.log('result', result);
+            this.log('BFS completed');
+            const history = formatRbfsResult(result.steps, result.last, get15PuzzleHash(this.items));
+            this.log(`Solution length: ${history.length} steps`);
+            console.log('history', history);
+            const interval = setInterval(() => {
+                if (history.length === 0) {
+                    clearInterval(interval);
+                    return;
+                }
+                this.items = history.shift();
+            }, 250);
+        }, 5000);
       }
 
       static get is() { return 'puzzle-app'; }
